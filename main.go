@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	insertCode = `e={user:{id:"88888888-8888-8888-8888-888888888888",name:"Neo",email:"x@x.com",status:"activated",createdDate:"2000-01-01T00:00:00.000Z"},licenses:{paidLicenses:{},effectiveLicenses:{"gitlens-pro":{organizationId:"Linux",latestStatus:"active",latestStartDate:"2024-01-01",latestEndDate:"2999-01-01",reactivationCount:99,nextOptInDate:"2999-01-01"}}},nextOptInDate:"2999-01-01"};`
+	insertCode = `e={user:{id:"88888888-8888-8888-8888-888888888888",name:"Neo",email:"x@x.com",status:"activated",createdDate:"2000-01-01T00:00:00.000Z"},licenses:{"paidLicenses":{"gitlens-pro":{"organizationId":"Linux","latestStatus":"active","latestStartDate":"2024-01-01","latestEndDate":"2999-01-01","reactivationCount":99}},effectiveLicenses:{"gitlens-pro":{organizationId:"Linux",latestStatus:"active",latestStartDate:"2024-01-01",latestEndDate:"2999-01-01",reactivationCount:99,nextOptInDate:"2999-01-01"}}},nextOptInDate:"2999-01-01"};`
 )
 
 type ExtensionPath struct {
@@ -42,6 +42,11 @@ var predefinedPaths = []ExtensionPath{
 		Name:        "Windsurf",
 		Path:        filepath.Join(".windsurf", "extensions"),
 		Description: "Windsurf 编辑器",
+	},
+	{
+		Name:        "Trae",
+		Path:        filepath.Join(".trae", "extensions"),
+		Description: "Trae 编辑器",
 	},
 }
 
@@ -98,6 +103,7 @@ func main() {
 		waitForKeyPress()
 		return
 	}
+
 	// 获取扩展目录
 	extensionsDir := getExtensionsDir()
 
@@ -143,7 +149,7 @@ func getLatestGitLensPath(extensionsDir string) (string, error) {
 	}
 
 	var gitLensDirs []string
-	pattern := regexp.MustCompile(`^eamodio\.gitlens-\d+\.\d+\.\d+$`)
+	pattern := regexp.MustCompile(`eamodio\.gitlens-\d+\.\d+\.\d+`)
 
 	for _, entry := range entries {
 		if entry.IsDir() && pattern.MatchString(entry.Name()) {
@@ -190,8 +196,8 @@ func promptForSelection(maxChoice int) int {
 }
 
 // 添加版本检测函数
-func isVersion15(dirName string) bool {
-	pattern := regexp.MustCompile(`^eamodio\.gitlens-15\.\d+\.\d+$`)
+func isVersion(dirName string, version int) bool {
+	pattern := regexp.MustCompile(fmt.Sprintf(`^eamodio\.gitlens-%d\.\d+\.\d+$`, version))
 	return pattern.MatchString(dirName)
 }
 
@@ -219,10 +225,13 @@ func processFile(filePath string) error {
 
 	// 获取目录名以检查版本
 	dirName := filepath.Base(filepath.Dir(filepath.Dir(filePath)))
-	if isVersion15(dirName) {
+	if isVersion(dirName, 15) {
 		return processVersion15File(filePath, content)
+	} else if isVersion(dirName, 16) {
+		return processVersion16File(filePath, content)
 	}
-	return processVersion16File(filePath, content)
+
+	return processVersion17File(filePath, content)
 }
 
 // 处理 15.x 版本的文件
@@ -262,6 +271,33 @@ func processVersion15File(filePath string, content []byte) error {
 func processVersion16File(filePath string, content []byte) error {
 	// 查找匹配模式
 	pattern := regexp.MustCompile(`let ([a-zA-Z])={id:e\.user\.id,name:`)
+	matches := pattern.FindStringSubmatch(string(content))
+
+	if len(matches) < 2 {
+		return fmt.Errorf("未找到匹配模式")
+	}
+
+	matchedLetter := matches[1]
+	exactMatch := fmt.Sprintf("let %s={id:e.user.id,name:", matchedLetter)
+
+	// 注入激活代码
+	newContent := strings.Replace(string(content), exactMatch, insertCode+exactMatch, 1)
+
+	// 写入修改后的内容
+	if err := os.WriteFile(filePath, []byte(newContent), 0644); err != nil {
+		return fmt.Errorf("写入文件失败: %v", err)
+	}
+
+	fmt.Printf("成功修改文件: %s\n", filePath)
+	fmt.Printf("匹配的变量: %s\n", matchedLetter)
+
+	return nil
+}
+
+// 处理 17.x 版本的文件
+func processVersion17File(filePath string, content []byte) error {
+	// 查找匹配模式
+	pattern := regexp.MustCompile(`let ([a-zA-Z,]*)=\{id:e\.user\.id,name:`)
 	matches := pattern.FindStringSubmatch(string(content))
 
 	if len(matches) < 2 {
