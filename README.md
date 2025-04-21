@@ -1,6 +1,6 @@
 # GitLens Pro Activator
 
-一个用于激活 GitLens Pro 的工具。
+一个用于激活 GitLens Pro 的工具，支持最新 v17
 
 下载文件在 bin 目录下
 
@@ -48,6 +48,10 @@ chmod +x activate_mac_arm64 && ./activate_mac_arm64
 ## 如果是高版本的gitlens，执行之后需要点击刷新按钮
 
 ![image](https://github.com/user-attachments/assets/37e03358-bff2-495d-aa76-ea7442c21110)
+
+## 请我喝杯茶
+
+![image](./screen/afdian-NoahCode.png)
 
 ## 请原作者喝杯茶
 
