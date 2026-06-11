@@ -1,6 +1,6 @@
 # GitLens Pro Activator
 
-一个用于激活 GitLens Pro 的工具，支持最新 v17
+一个用于激活 GitLens Pro 的工具，支持最新 v17，v18
 
 下载文件在 bin 目录下
 
@@ -19,14 +19,12 @@
 效果
 ![image](./screen/企业微信截图_20241220130552.png)
 
-
-
-
 ### Windows 用户
 
 双击运行
+
 ```
-activate.exe 
+activate.exe
 ```
 
 ### macOS 用户
